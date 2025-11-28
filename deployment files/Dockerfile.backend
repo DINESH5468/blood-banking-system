@@ -1,0 +1,32 @@
+# ================================
+# 1. Builder Stage
+# ================================
+FROM eclipse-temurin:21-jdk AS builder
+
+# Install Git
+RUN apt-get update && apt-get install -y git
+
+WORKDIR /workspace
+
+# Clone backend repo
+RUN git clone https://github.com/DINESH5468/bloodbank-backend1.git .
+
+# Fix permission for mvnw
+RUN chmod +x mvnw
+
+# Build Spring Boot JAR (skip tests)
+RUN ./mvnw -q -DskipTests clean package
+
+# ================================
+# 2. Runtime Stage
+# ================================
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+# Copy built JAR from builder
+COPY --from=builder /workspace/target/*.jar app.jar
+
+EXPOSE 8081
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
